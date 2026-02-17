@@ -1,0 +1,63 @@
+name: YouTube → Pushover
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: youtube-alert
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install feedparser requests
+
+      - name: Run checker
+        env:
+          # Prefer the feed URL; your script also supports YOUTUBE_CHANNEL_ID.
+          YOUTUBE_FEED_URL: ${{ vars.YOUTUBE_FEED_URL }}
+
+          # State file committed to repo
+          LAST_SEEN_FILE: last_seen.txt
+
+          # Pushover secrets
+          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
+
+          # Optional: if you applied the patch above, you can control these:
+          # PUSHOVER_PRIORITY: "1"   # 1=high (won't bypass silent), 2=emergency
+          # PUSHOVER_RETRY: "60"
+          # PUSHOVER_EXPIRE: "3600"
+        run: |
+          python notifier.py
+
+      - name: Commit state update (if changed)
+        run: |
+          if git diff --quiet; then
+            echo "No state changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add last_seen.txt
+          git commit -m "Update last seen YouTube video"
+          git push
