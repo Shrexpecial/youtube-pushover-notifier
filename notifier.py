@@ -27,7 +27,7 @@ def send_pushover_notification(to: str, text: str, url: Optional[str] = None) ->
         "user": to,
         "title": "📺 New YouTube Video",
         "message": text,
-        "priority": int(os.environ.get("PUSHOVER_PRIORITY", "2")),
+        "priority": int(os.environ.get("PUSHOVER_PRIORITY", "1")),
     }
 
     # Only valid for Emergency priority
