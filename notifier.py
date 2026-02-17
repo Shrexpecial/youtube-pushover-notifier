@@ -1,6 +1,6 @@
 import warnings
 
-# Suppress noisy urllib3/OpenSSL warnings (e.g. NotOpenSSLWarning) so they
+# Suppress noisy urllib3/OpenSSL warnings so they
 # don't spam the log when run under launchctl.
 warnings.filterwarnings("ignore", module="urllib3")
 
